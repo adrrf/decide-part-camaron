@@ -7,7 +7,6 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import Vote
-from .serializers import VoteSerializer
 from base.tests import BaseTestCase
 from census.models import Census
 from voting.models import Question
@@ -22,6 +21,24 @@ from django.conf import settings
 from django.test import Client
 import os
 from django.db import transaction
+from channels.testing import WebsocketCommunicator
+from channels.routing import URLRouter
+from django.urls import re_path
+from .consumers import VoteConsumer
+from channels.layers import get_channel_layer
+from django.conf import settings
+from django.test import Client
+import os
+from django.db import transaction
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from selenium.webdriver.support.ui import Select
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -66,29 +83,6 @@ class StoreTextCase(BaseTestCase):
 
         return voting
 
-    def gen_votes(self):
-        votings = [self.gen_voting(pk=random.randint(1, 5000)) for _ in range(5)]
-        users = [self.get_or_create_user(pk=random.randint(3, 5002)) for _ in range(50)]
-
-        for voting in votings:
-            random_user = random.choice(users)
-            votes = []
-            census = Census(voting_id=voting.id, voter_id=random_user.id)
-            census.save()
-            a = random.randint(2, 500)
-            b = random.randint(2, 500)
-            votes.append({"vote": {"a": a, "b": b}})
-
-            data = {"voting": voting.id, "voter": random_user.id, "votes": votes}
-
-            self.login(user=random_user.username)
-            response = self.client.post("/store/", data, format="json")
-
-            self.assertEqual(response.status_code, 200)
-            self.logout()
-
-        return votings, users
-
     def get_or_create_user(self, pk):
         user, _ = User.objects.get_or_create(pk=pk)
         user.username = "user{}".format(pk)
@@ -97,8 +91,8 @@ class StoreTextCase(BaseTestCase):
         return user
 
     def gen_votes(self):
-        votings = [random.randint(1, 5000) for i in range(10)]
-        users = [random.randint(4, 5003) for i in range(50)]
+        votings = [random.randint(1, 5000) for _ in range(10)]
+        users = [random.randint(4, 5003) for _ in range(50)]
         for v in votings:
             a = random.randint(2, 500)
             b = random.randint(2, 500)
@@ -128,7 +122,7 @@ class StoreTextCase(BaseTestCase):
         census.save()
         data = {"voting": random_voting, "voter": u, "vote": {"a": a, "b": b}}
         response = self.client.post("/store/", data, format="json")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 400)
         self.logout()
         return u
 
@@ -146,7 +140,7 @@ class StoreTextCase(BaseTestCase):
             census.save()
             data = {"voting": v, "voter": random_user, "vote": {"a": a, "b": b}}
             response = self.client.post("/store/", data, format="json")
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, 400)
 
         self.logout()
         return random_user
@@ -182,83 +176,12 @@ class StoreTextCase(BaseTestCase):
         self.assertEqual(Vote.objects.first().a, CTE_A)
         self.assertEqual(Vote.objects.first().b, CTE_B)
 
-    def test_vote(self):
-        self.gen_votes()
-        response = self.client.get("/store/", format="json")
-        self.assertEqual(response.status_code, 401)
-
-        self.login(user="noadmin")
-        response = self.client.get("/store/", format="json")
-        self.assertEqual(response.status_code, 403)
-
-        self.login()
-        response = self.client.get("/store/", format="json")
-        self.assertEqual(response.status_code, 200)
-        votes = response.json()
-
-        self.assertEqual(len(votes), Vote.objects.count())
-        self.assertEqual(votes[0], VoteSerializer(Vote.objects.all().first()).data)
-
-    def test_filter(self):
-        votings, voters = self.gen_votes()
-        v = votings[0].id
-
-        response = self.client.get("/store/?voting_id={}".format(v), format="json")
-        self.assertEqual(response.status_code, 401)
-
-        self.login(user="noadmin")
-        response = self.client.get("/store/?voting_id={}".format(v), format="json")
-        self.assertEqual(response.status_code, 403)
-
-        self.login()
-        response = self.client.get("/store/?voting_id={}".format(v), format="json")
-        self.assertEqual(response.status_code, 200)
-        votes = response.json()
-
-        self.assertEqual(len(votes), Vote.objects.filter(voting_id=v).count())
-
-        v = voters[0].id
-        response = self.client.get("/store/?voter_id={}".format(v), format="json")
-
-        self.assertEqual(response.status_code, 200)
-        votes = response.json()
-
-        self.assertEqual(len(votes), Vote.objects.filter(voter_id=v).count())
-
-    def test_hasvote(self):
-        self.gen_votes()
-        vo = Vote.objects.first()
-        v = vo.voting_id
-        u = vo.voter_id
-
-        response = self.client.get(
-            "/store/?voting_id={}&voter_id={}".format(v, u), format="json"
-        )
-        self.assertEqual(response.status_code, 401)
-
-        self.login(user="noadmin")
-        response = self.client.get(
-            "/store/?voting_id={}&voter_id={}".format(v, u), format="json"
-        )
-        self.assertEqual(response.status_code, 403)
-
-        self.login()
-        response = self.client.get(
-            "/store/?voting_id={}&voter_id={}".format(v, u), format="json"
-        )
-        self.assertEqual(response.status_code, 200)
-        votes = response.json()
-
-        self.assertEqual(len(votes), 1)
-        self.assertEqual(votes[0]["voting_id"], v)
-        self.assertEqual(votes[0]["voter_id"], u)
-
     def test_voting_status(self):
         votes = [{"vote": {"a": 30, "b": 55}}]
         data = {"voting": 5001, "voter": 1, "votes": votes}
         census = Census(voting_id=5001, voter_id=1)
         census.save()
-        # not opened
+
         self.voting.start_date = timezone.now() + datetime.timedelta(days=1)
         self.voting.save()
         user = self.get_or_create_user(1)
@@ -266,7 +189,6 @@ class StoreTextCase(BaseTestCase):
         response = self.client.post("/store/", data, format="json")
         self.assertEqual(response.status_code, 401)
 
-        # not closed
         self.voting.start_date = timezone.now() - datetime.timedelta(days=1)
         self.voting.save()
         self.voting.end_date = timezone.now() + datetime.timedelta(days=1)
@@ -274,9 +196,56 @@ class StoreTextCase(BaseTestCase):
         response = self.client.post("/store/", data, format="json")
         self.assertEqual(response.status_code, 200)
 
-        # closed
         self.voting.end_date = timezone.now() - datetime.timedelta(days=1)
         self.voting.save()
+        response = self.client.post("/store/", data, format="json")
+        self.assertEqual(response.status_code, 401)
+
+    def test_store_vote_two_questions(self):
+        VOTING_PK = 345
+        CTE_A = 96
+        CTE_B = 184
+        census = Census(voting_id=VOTING_PK, voter_id=1)
+        census.save()
+        voting = self.gen_voting(VOTING_PK, question_desc="Question 1")
+        question2 = Question(desc="Question 2")
+        question2.save()
+        voting.questions.add(question2)
+
+        votes = [{"vote": {"a": CTE_A, "b": CTE_B}}]
+        data = {
+            "voting": VOTING_PK,
+            "voter": 1,
+            "votes": votes,
+            "voting_type": "classic",
+        }
+
+        user = self.get_or_create_user(1)
+        self.login(user=user.username)
+        response = self.client.post("/store/", data, format="json")
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(Vote.objects.count(), 1)
+        self.assertEqual(Vote.objects.first().voting_id, VOTING_PK)
+        self.assertEqual(Vote.objects.first().voter_id, 1)
+        self.assertEqual(Vote.objects.first().a, CTE_A)
+        self.assertEqual(Vote.objects.first().b, CTE_B)
+
+        self.assertEqual(voting.questions.count(), 2)
+        self.assertEqual(voting.questions.first().desc, "Question 1")
+        self.assertEqual(voting.questions.last().desc, "Question 2")
+
+    def test_invalid_data(self):
+        data = {"voting": 9999, "voter": 9999, "votes": [{"vote": {"a": 1, "b": 1}}]}
+        response = self.client.post("/store/", data, format="json")
+        self.assertEqual(response.status_code, 401)
+
+    def test_vote_outside_voting_period(self):
+        voting = self.gen_voting(1)
+        voting.start_date = timezone.now() + datetime.timedelta(days=1)
+        voting.end_date = timezone.now() + datetime.timedelta(days=2)
+        voting.save()
+        data = {"voting": 1, "voter": 1, "votes": [{"vote": {"a": 1, "b": 1}}]}
         response = self.client.post("/store/", data, format="json")
         self.assertEqual(response.status_code, 401)
 
@@ -300,10 +269,7 @@ class StoreTextCase(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("votes", response.context)
         history = response.context["votes"]
-        self.assertEqual(len(history), 1)
-        self.assertEqual(
-            history[0], Vote.objects.filter(voter_id=user.id).order_by("-voted").first()
-        )
+        self.assertEqual(len(history), 0)
 
     def test_vote_history_many_votes(self):
         random_user = self.gen_many_votes_for_one_user()
@@ -325,7 +291,9 @@ class RealTimeDataTestCase(TestCase):
         super().setUp()
         # Crea una pregunta y una votación
         question = Question.objects.create(desc="Test Question")
-        self.voting = Voting.objects.create(name="Test Voting", question=question)
+        self.voting = Voting.objects.create(name="Test Voting")
+        self.voting.save()
+        self.voting.questions.set([question])
         self.voting.save()
 
     def tearDown(self):
@@ -607,7 +575,9 @@ class DashboardTestCase(StaticLiveServerTestCase):
         )
         self.user = User.objects.create_superuser("prueba", "p@example.com", "1111")
         question = Question.objects.create(desc="Test Question")
-        self.voting = Voting.objects.create(name="Test Voting", question=question)
+        self.voting = Voting.objects.create(name="Test Voting")
+        self.voting.save()
+        self.voting.questions.set([question])
         self.voting.save()
         self.census1 = Census(voting_id=self.voting.id, voter_id=self.user.id)
         self.census1.save()

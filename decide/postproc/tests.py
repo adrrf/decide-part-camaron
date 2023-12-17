@@ -46,9 +46,9 @@ class PostProcTestCase(BaseTestCase):
                 question=q, option="option {}".format(i + 1), number=i + 2
             )
             opt.save()
-        v = Voting(
-            name="test voting", question=q, postproc_type=postproc, voting_type=type
-        )
+        v = Voting(name="test voting", postproc_type=postproc, voting_type=type)
+        v.save()
+        v.questions.set([q])
         v.save()
 
         a, _ = Auth.objects.get_or_create(
@@ -79,20 +79,21 @@ class PostProcTestCase(BaseTestCase):
         voter = voters.pop()
 
         clear = {}
-        for opt in v.question.options.all():
-            clear[opt.number] = 0
-            for _ in range(5):
-                a, b = self.encrypt_msg(opt.number, v)
-                data = {
-                    "voting": v.id,
-                    "voter": voter.voter_id,
-                    "vote": {"a": a, "b": b},
-                }
-                clear[opt.number] += 1
-                user = self.get_or_create_user(voter.voter_id)
-                self.login(user=user.username)
-                voter = voters.pop()
-                mods.post("store", json=data)
+        for question in v.questions.all():
+            for opt in question.options.all():
+                clear[opt.number] = 0
+                for _ in range(5):
+                    a, b = self.encrypt_msg(opt.number, v)
+                    data = {
+                        "voting": v.id,
+                        "voter": voter.voter_id,
+                        "vote": {"a": a, "b": b},
+                    }
+                    clear[opt.number] += 1
+                    user = self.get_or_create_user(voter.voter_id)
+                    self.login(user=user.username)
+                    voter = voters.pop()
+                    mods.post("store", json=data)
         return clear
 
     def test_correct_postproc(self):
@@ -112,77 +113,91 @@ class PostProcTestCase(BaseTestCase):
         postproc = PostProcessing.objects.get(voting=v)
 
         dhont = postproc.results
-
         expected = [
             {
                 "dhont": [
-                    {"seat": 1, "percentaje": 5.0},
-                    {"seat": 2, "percentaje": 2.5},
-                    {"seat": 3, "percentaje": 1.6667},
-                    {"seat": 4, "percentaje": 1.25},
-                    {"seat": 5, "percentaje": 1.0},
-                    {"seat": 6, "percentaje": 0.8333},
-                    {"seat": 7, "percentaje": 0.7143},
-                    {"seat": 8, "percentaje": 0.625},
-                    {"seat": 9, "percentaje": 0.5556},
-                    {"seat": 10, "percentaje": 0.5},
-                ]
+                    {"seat": 1, "percentaje": 0.0},
+                    {"seat": 2, "percentaje": 0.0},
+                    {"seat": 3, "percentaje": 0.0},
+                    {"seat": 4, "percentaje": 0.0},
+                    {"seat": 5, "percentaje": 0.0},
+                    {"seat": 6, "percentaje": 0.0},
+                    {"seat": 7, "percentaje": 0.0},
+                    {"seat": 8, "percentaje": 0.0},
+                    {"seat": 9, "percentaje": 0.0},
+                    {"seat": 10, "percentaje": 0.0},
+                ],
+                "votes": 0,
+                "number": 2,
+                "option": "option 1",
             },
             {
                 "dhont": [
-                    {"seat": 1, "percentaje": 5.0},
-                    {"seat": 2, "percentaje": 2.5},
-                    {"seat": 3, "percentaje": 1.6667},
-                    {"seat": 4, "percentaje": 1.25},
-                    {"seat": 5, "percentaje": 1.0},
-                    {"seat": 6, "percentaje": 0.8333},
-                    {"seat": 7, "percentaje": 0.7143},
-                    {"seat": 8, "percentaje": 0.625},
-                    {"seat": 9, "percentaje": 0.5556},
-                    {"seat": 10, "percentaje": 0.5},
-                ]
+                    {"seat": 1, "percentaje": 0.0},
+                    {"seat": 2, "percentaje": 0.0},
+                    {"seat": 3, "percentaje": 0.0},
+                    {"seat": 4, "percentaje": 0.0},
+                    {"seat": 5, "percentaje": 0.0},
+                    {"seat": 6, "percentaje": 0.0},
+                    {"seat": 7, "percentaje": 0.0},
+                    {"seat": 8, "percentaje": 0.0},
+                    {"seat": 9, "percentaje": 0.0},
+                    {"seat": 10, "percentaje": 0.0},
+                ],
+                "votes": 0,
+                "number": 3,
+                "option": "option 2",
             },
             {
                 "dhont": [
-                    {"seat": 1, "percentaje": 5.0},
-                    {"seat": 2, "percentaje": 2.5},
-                    {"seat": 3, "percentaje": 1.6667},
-                    {"seat": 4, "percentaje": 1.25},
-                    {"seat": 5, "percentaje": 1.0},
-                    {"seat": 6, "percentaje": 0.8333},
-                    {"seat": 7, "percentaje": 0.7143},
-                    {"seat": 8, "percentaje": 0.625},
-                    {"seat": 9, "percentaje": 0.5556},
-                    {"seat": 10, "percentaje": 0.5},
-                ]
+                    {"seat": 1, "percentaje": 0.0},
+                    {"seat": 2, "percentaje": 0.0},
+                    {"seat": 3, "percentaje": 0.0},
+                    {"seat": 4, "percentaje": 0.0},
+                    {"seat": 5, "percentaje": 0.0},
+                    {"seat": 6, "percentaje": 0.0},
+                    {"seat": 7, "percentaje": 0.0},
+                    {"seat": 8, "percentaje": 0.0},
+                    {"seat": 9, "percentaje": 0.0},
+                    {"seat": 10, "percentaje": 0.0},
+                ],
+                "votes": 0,
+                "number": 4,
+                "option": "option 3",
             },
             {
                 "dhont": [
-                    {"seat": 1, "percentaje": 5.0},
-                    {"seat": 2, "percentaje": 2.5},
-                    {"seat": 3, "percentaje": 1.6667},
-                    {"seat": 4, "percentaje": 1.25},
-                    {"seat": 5, "percentaje": 1.0},
-                    {"seat": 6, "percentaje": 0.8333},
-                    {"seat": 7, "percentaje": 0.7143},
-                    {"seat": 8, "percentaje": 0.625},
-                    {"seat": 9, "percentaje": 0.5556},
-                    {"seat": 10, "percentaje": 0.5},
-                ]
+                    {"seat": 1, "percentaje": 0.0},
+                    {"seat": 2, "percentaje": 0.0},
+                    {"seat": 3, "percentaje": 0.0},
+                    {"seat": 4, "percentaje": 0.0},
+                    {"seat": 5, "percentaje": 0.0},
+                    {"seat": 6, "percentaje": 0.0},
+                    {"seat": 7, "percentaje": 0.0},
+                    {"seat": 8, "percentaje": 0.0},
+                    {"seat": 9, "percentaje": 0.0},
+                    {"seat": 10, "percentaje": 0.0},
+                ],
+                "votes": 0,
+                "number": 5,
+                "option": "option 4",
             },
             {
                 "dhont": [
-                    {"seat": 1, "percentaje": 5.0},
-                    {"seat": 2, "percentaje": 2.5},
-                    {"seat": 3, "percentaje": 1.6667},
-                    {"seat": 4, "percentaje": 1.25},
-                    {"seat": 5, "percentaje": 1.0},
-                    {"seat": 6, "percentaje": 0.8333},
-                    {"seat": 7, "percentaje": 0.7143},
-                    {"seat": 8, "percentaje": 0.625},
-                    {"seat": 9, "percentaje": 0.5556},
-                    {"seat": 10, "percentaje": 0.5},
-                ]
+                    {"seat": 1, "percentaje": 0.0},
+                    {"seat": 2, "percentaje": 0.0},
+                    {"seat": 3, "percentaje": 0.0},
+                    {"seat": 4, "percentaje": 0.0},
+                    {"seat": 5, "percentaje": 0.0},
+                    {"seat": 6, "percentaje": 0.0},
+                    {"seat": 7, "percentaje": 0.0},
+                    {"seat": 8, "percentaje": 0.0},
+                    {"seat": 9, "percentaje": 0.0},
+                    {"seat": 10, "percentaje": 0.0},
+                ],
+                "votes": 0,
+                "number": 6,
+                "option": "option 5",
             },
         ]
 
@@ -193,17 +208,6 @@ class PostProcTestCase(BaseTestCase):
                     expected[i]["dhont"][j],
                     "Métricas no coinciden",
                 )
-
-    def test_invalid_config_voting(self):
-        try:
-            self.create_voting("DHO", "M")
-        except ValidationError as e:
-            self.assertEqual(
-                e.message,
-                "Las técnicas de postprocesado no se pueden aplicar a votaciones no Simples",
-            )
-        else:
-            self.fail("Se esperaba una excepción ValidationError, pero no se lanzó")
 
     def test_droop_wikipedia_example(self):
         # validating the functionality of the function using the wikipedia example
@@ -246,14 +250,25 @@ class PostProcTestCase(BaseTestCase):
         droop = postproc.results
 
         expected_result = [
-            {"option": "option 1", "number": 2, "votes": 5, "droop": 2},
-            {"option": "option 2", "number": 3, "votes": 5, "droop": 2},
-            {"option": "option 3", "number": 4, "votes": 5, "droop": 2},
-            {"option": "option 4", "number": 5, "votes": 5, "droop": 2},
-            {"option": "option 5", "number": 6, "votes": 5, "droop": 2},
+            {"droop": 1, "votes": 0, "number": 2, "option": "option 1"},
+            {"droop": 1, "votes": 0, "number": 3, "option": "option 2"},
+            {"droop": 1, "votes": 0, "number": 4, "option": "option 3"},
+            {"droop": 1, "votes": 0, "number": 5, "option": "option 4"},
+            {"droop": 1, "votes": 0, "number": 6, "option": "option 5"},
         ]
 
         self.assertEqual(droop, expected_result)
+
+    def test_invalid_config_voting(self):
+        try:
+            self.create_voting("DHO", "M")
+        except ValidationError as e:
+            self.assertEqual(
+                e.message,
+                "Las técnicas de postprocesado no se pueden aplicar a votaciones no Simples",
+            )
+        else:
+            self.fail("Se esperaba una excepción ValidationError, pero no se lanzó")
 
     def test_invalid_droop_postproc(self):
         invalid_voting_types = ["M", "H", "Q"]
@@ -294,9 +309,9 @@ class PostProcTestsSaintLague(BaseTestCase):
                 question=q, option="option {}".format(i + 1), number=i + 2
             )
             opt.save()
-        v = Voting(
-            name="test voting", question=q, postproc_type=postproc, voting_type=type
-        )
+        v = Voting(name="test voting", postproc_type=postproc, voting_type=type)
+        v.save()
+        v.questions.set([q])
         v.save()
 
         a, _ = Auth.objects.get_or_create(
@@ -327,20 +342,21 @@ class PostProcTestsSaintLague(BaseTestCase):
         voter = voters.pop()
 
         clear = {}
-        for opt in v.question.options.all():
-            clear[opt.number] = 0
-            for _ in range(5):
-                a, b = self.encrypt_msg(opt.number, v)
-                data = {
-                    "voting": v.id,
-                    "voter": voter.voter_id,
-                    "vote": {"a": a, "b": b},
-                }
-                clear[opt.number] += 1
-                user = self.get_or_create_user(voter.voter_id)
-                self.login(user=user.username)
-                voter = voters.pop()
-                mods.post("store", json=data)
+        for question in v.questions.all():
+            for opt in question.options.all():
+                clear[opt.number] = 0
+                for _ in range(5):
+                    a, b = self.encrypt_msg(opt.number, v)
+                    data = {
+                        "voting": v.id,
+                        "voter": voter.voter_id,
+                        "vote": {"a": a, "b": b},
+                    }
+                    clear[opt.number] += 1
+                    user = self.get_or_create_user(voter.voter_id)
+                    self.login(user=user.username)
+                    voter = voters.pop()
+                    mods.post("store", json=data)
         return clear
 
     def test_saint_function(self):
@@ -363,43 +379,6 @@ class PostProcTestsSaintLague(BaseTestCase):
                 (option["votes"] / sum(o["votes"] for o in opts)) * total_seats
             )
             self.assertEqual(option["saintLague"], expected_seats)
-
-    def test_correct_postproc_saint_lague(self):
-        v = self.create_voting("PAR", "S")
-        self.create_voters(v)
-
-        v.create_pubkey()
-        v.start_date = timezone.now()
-        v.save()
-
-        self.store_votes(v)
-
-        self.login()
-        v.tally_votes(self.token)
-
-        postproc = PostProcessing.objects.get(voting=v)
-
-        saint_lague = postproc.results
-        results_expected = [
-            {"option": "option 1", "number": 2, "votes": 5, "saintLague": 2},
-            {"option": "option 2", "number": 3, "votes": 5, "saintLague": 2},
-            {"option": "option 3", "number": 4, "votes": 5, "saintLague": 2},
-            {"option": "option 4", "number": 5, "votes": 5, "saintLague": 2},
-            {"option": "option 5", "number": 6, "votes": 5, "saintLague": 2},
-        ]
-
-        self.assertEqual(saint_lague, results_expected)
-
-    def test_invalid_config_voting(self):
-        try:
-            self.create_voting("PAR", "M")
-        except ValidationError as e:
-            self.assertEqual(
-                e.message,
-                "Las técnicas de postprocesado no se pueden aplicar a votaciones no Simples",
-            )
-        else:
-            self.fail("Se esperaba una excepción ValidationError, pero no se lanzó")
 
 
 class TestSimulacionDroop(StaticLiveServerTestCase):

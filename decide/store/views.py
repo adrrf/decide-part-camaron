@@ -45,6 +45,9 @@ class StoreView(generics.ListAPIView):
         vid = request.data.get("voting")
         voting = mods.get("voting", params={"id": vid})
 
+        vid = request.data.get("voting")
+
+        voting = mods.get("voting", params={"id": vid})
         if not voting or not isinstance(voting, list):
             return Response({}, status=status.HTTP_401_UNAUTHORIZED)
         start_date = voting[0].get("start_date", None)
@@ -87,9 +90,20 @@ class StoreView(generics.ListAPIView):
             if nested_vote:
                 a = nested_vote.get("a")
                 b = nested_vote.get("b")
-                defs = {"a": a, "b": b}
+                v = Vote(voting_id=vid, voter_id=uid, a=a, b=b)
+                v.save()
+
+        defs = {"a": a, "b": b}
+        if voting[0].get("voting_type", None) == "H":
+            census = mods.get(
+                "census/role/{}".format(vid), params={"voter_id": uid}, response=True
+            )
+            census_content = census.content.decode("utf-8")
+            role = census_content.strip('"')
+            numero = int(role)
+            for i in range(1, numero):
                 v, _ = Vote.objects.get_or_create(
-                    voting_id=vid, voter_id=uid, defaults=defs
+                    voting_id=vid, voter_id=uid, value=i, defaults=defs
                 )
                 v.a = a
                 v.b = b
@@ -170,6 +184,39 @@ def restore_backup(request):
             return HttpResponseBadRequest(f"Error restoring backup: {e}")
 
     return HttpResponseRedirect(reverse("admin:store_vote_changelist"))
+
+
+def delete_backups(request):
+    backup_files = list(os.listdir(settings.DATABASE_BACKUP_DIR))
+    return render(request, "delete_backups.html", {"backups": backup_files})
+
+
+def delete_selected_backup(request, selected_backup):
+    if request.method == "POST":
+        selected_backup = request.POST.get("selected_backup", None)
+        if selected_backup:
+            backup_path = os.path.join(settings.DATABASE_BACKUP_DIR, selected_backup)
+            if (
+                os.path.exists(backup_path)
+                and backup_path.endswith(".psql.bin")
+                and not ".." in backup_path
+            ):
+                os.remove(backup_path)
+                messages.success(
+                    request, f'Backup "{selected_backup}" deleted successfully.'
+                )
+            else:
+                messages.error(request, "Error deleting backup: Backup file not found")
+                return HttpResponseBadRequest(
+                    f"Error deleting backup: Backup file not found: {selected_backup}"
+                )
+        else:
+            messages.error(request, "No backup selected for deletion.")
+        return HttpResponseRedirect(reverse("store:delete_backups"))
+    else:
+        return render(
+            request, "confirm_delete.html", {"selected_backup": selected_backup}
+        )
 
 
 def delete_backups(request):
