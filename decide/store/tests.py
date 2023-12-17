@@ -104,8 +104,7 @@ class StoreTextCase(BaseTestCase):
             census.save()
             votes = []
             votes.append({"vote": {"a": a, "b": b}})
-            data = {"voting": v, "voter": random_user,
-                    "votes": votes}
+            data = {"voting": v, "voter": random_user, "votes": votes}
             response = self.client.post("/store/", data, format="json")
             self.assertEqual(response.status_code, 200)
 
@@ -125,8 +124,7 @@ class StoreTextCase(BaseTestCase):
         census.save()
         votes = []
         votes.append({"vote": {"a": a, "b": b}})
-        data = {"voting": random_voting, "voter": u,
-                "votes": votes}
+        data = {"voting": random_voting, "voter": u, "votes": votes}
         response = self.client.post("/store/", data, format="json")
         self.assertEqual(response.status_code, 200)
         self.logout()
@@ -146,8 +144,7 @@ class StoreTextCase(BaseTestCase):
             census.save()
             votes = []
             votes.append({"vote": {"a": a, "b": b}})
-            data = {"voting": v, "voter": random_user,
-                    "votes": votes}
+            data = {"voting": v, "voter": random_user, "votes": votes}
             response = self.client.post("/store/", data, format="json")
             self.assertEqual(response.status_code, 200)
 
@@ -245,8 +242,7 @@ class StoreTextCase(BaseTestCase):
         self.assertEqual(voting.questions.last().desc, "Question 2")
 
     def test_invalid_data(self):
-        data = {"voting": 9999, "voter": 9999,
-                "votes": [{"vote": {"a": 1, "b": 1}}]}
+        data = {"voting": 9999, "voter": 9999, "votes": [{"vote": {"a": 1, "b": 1}}]}
         response = self.client.post("/store/", data, format="json")
         self.assertEqual(response.status_code, 401)
 
@@ -280,8 +276,7 @@ class StoreTextCase(BaseTestCase):
         self.assertIn("votes", response.context)
         history = response.context["votes"]
         self.assertEqual(len(history), 1)
-        self.assertEqual(history[0], Vote.objects.filter(
-            voter_id=user.id).first())
+        self.assertEqual(history[0], Vote.objects.filter(voter_id=user.id).first())
 
     def test_vote_history_many_votes(self):
         random_user = self.gen_many_votes_for_one_user()
@@ -291,12 +286,10 @@ class StoreTextCase(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("votes", response.context)
         history = response.context["votes"]
-        self.assertEqual(len(history), Vote.objects.filter(
-            voter_id=user.id).count())
+        self.assertEqual(len(history), Vote.objects.filter(voter_id=user.id).count())
         for i, vote in enumerate(history):
             self.assertEqual(
-                vote, Vote.objects.filter(
-                    voter_id=user.id).order_by("-voted")[i]
+                vote, Vote.objects.filter(voter_id=user.id).order_by("-voted")[i]
             )
 
 
@@ -427,8 +420,7 @@ class BackupTestCase(TestCase):
         backup_files = list(os.listdir(settings.DATABASE_BACKUP_DIR))
 
         if backup_savestate in backup_files:
-            os.remove(os.path.join(
-                settings.DATABASE_BACKUP_DIR, backup_savestate))
+            os.remove(os.path.join(settings.DATABASE_BACKUP_DIR, backup_savestate))
 
         command = f"python manage.py dbbackup -o {backup_savestate}"
         subprocess.run(command, shell=True, check=True)
@@ -438,8 +430,7 @@ class BackupTestCase(TestCase):
     def tearDownClass(cls):
         backup_savestate = "testsave.psql.bin"
         subprocess.run(
-            ["python", "manage.py", "dbrestore",
-                "--noinput", "-i", backup_savestate],
+            ["python", "manage.py", "dbrestore", "--noinput", "-i", backup_savestate],
             check=True,
         )
 
@@ -484,8 +475,7 @@ class BackupTestCase(TestCase):
     def test_backup_file_is_created_with_name(self):
         try:
             backup_name = "test"
-            self.client.post(
-                f"/store/vote/create_backup/{backup_name}/", format="json")
+            self.client.post(f"/store/vote/create_backup/{backup_name}/", format="json")
             self.assertTrue(
                 os.path.exists(
                     os.path.join(
@@ -508,8 +498,7 @@ class BackupTestCase(TestCase):
     def test_backup_file_is_restored(self):
         try:
             backup_name = "test"
-            self.client.get(
-                f"/store/vote/create_backup/{backup_name}/", format="json")
+            self.client.get(f"/store/vote/create_backup/{backup_name}/", format="json")
             self.assertTrue(
                 os.path.exists(
                     os.path.join(
@@ -534,8 +523,7 @@ class BackupTestCase(TestCase):
 
         restore_url = reverse("store:vote_restore_backup")
         response = self.client.post(
-            restore_url, {
-                "selected_backup": f"{inexistent_backup_name}.psql.bin"}
+            restore_url, {"selected_backup": f"{inexistent_backup_name}.psql.bin"}
         )
         self.assertEqual(response.status_code, 400)  # bad request
 
@@ -543,8 +531,7 @@ class BackupTestCase(TestCase):
     def test_delete_backup(self):
         try:
             backup_name = "test"
-            self.client.get(
-                f"/store/vote/create_backup/{backup_name}/", format="json")
+            self.client.get(f"/store/vote/create_backup/{backup_name}/", format="json")
             self.assertTrue(
                 os.path.exists(
                     os.path.join(
@@ -565,8 +552,7 @@ class BackupTestCase(TestCase):
             self.assertEqual(response.status_code, 302)
 
             self.assertNotIn(
-                f"{backup_name}.psql.bin", os.listdir(
-                    settings.DATABASE_BACKUP_DIR)
+                f"{backup_name}.psql.bin", os.listdir(settings.DATABASE_BACKUP_DIR)
             )
 
         except Exception as e:
@@ -581,8 +567,7 @@ class BackupTestCase(TestCase):
             kwargs={"selected_backup": f"{inexistent_backup_name}.psql.bin"},
         )
         response = self.client.post(
-            delete_url, {
-                "selected_backup": f"{inexistent_backup_name}.psql.bin"}
+            delete_url, {"selected_backup": f"{inexistent_backup_name}.psql.bin"}
         )
         self.assertEqual(response.status_code, 400)  # bad request
 
@@ -595,8 +580,7 @@ class DashboardTestCase(StaticLiveServerTestCase):
         self.userlog = User.objects.create_superuser(
             "adminprueba", "admin@example.com", "1111"
         )
-        self.user = User.objects.create_superuser(
-            "prueba", "p@example.com", "1111")
+        self.user = User.objects.create_superuser("prueba", "p@example.com", "1111")
         question = Question.objects.create(desc="Test Question")
         self.voting = Voting.objects.create(name="Test Voting")
         self.voting.save()
@@ -604,8 +588,7 @@ class DashboardTestCase(StaticLiveServerTestCase):
         self.voting.save()
         self.census1 = Census(voting_id=self.voting.id, voter_id=self.user.id)
         self.census1.save()
-        self.census2 = Census(voting_id=self.voting.id,
-                              voter_id=self.userlog.id)
+        self.census2 = Census(voting_id=self.voting.id, voter_id=self.userlog.id)
         self.census2.save()
 
         self.driver = webdriver.Chrome()
@@ -642,11 +625,9 @@ class DashboardTestCase(StaticLiveServerTestCase):
         # Hacer voto
         self.driver.find_element(By.LINK_TEXT, "Votes").click()
         self.driver.find_element(By.CSS_SELECTOR, "li > .addlink").click()
-        self.driver.find_element(
-            By.ID, "id_voting_id").send_keys(str(self.voting.id))
+        self.driver.find_element(By.ID, "id_voting_id").send_keys(str(self.voting.id))
         self.driver.find_element(By.ID, "id_voter_id").click()
-        self.driver.find_element(
-            By.ID, "id_voter_id").send_keys(str(self.user.id))
+        self.driver.find_element(By.ID, "id_voter_id").send_keys(str(self.user.id))
         self.driver.find_element(By.ID, "id_a").click()
         self.driver.find_element(By.ID, "id_a").send_keys("1")
         self.driver.find_element(By.ID, "id_b").click()
@@ -707,11 +688,9 @@ class DashboardTestCase(StaticLiveServerTestCase):
         # Hacer voto
         self.driver.find_element(By.LINK_TEXT, "Votes").click()
         self.driver.find_element(By.CSS_SELECTOR, "li > .addlink").click()
-        self.driver.find_element(
-            By.ID, "id_voting_id").send_keys(str(self.voting.id))
+        self.driver.find_element(By.ID, "id_voting_id").send_keys(str(self.voting.id))
         self.driver.find_element(By.ID, "id_voter_id").click()
-        self.driver.find_element(
-            By.ID, "id_voter_id").send_keys(str(self.user.id))
+        self.driver.find_element(By.ID, "id_voter_id").send_keys(str(self.user.id))
         self.driver.find_element(By.ID, "id_a").click()
         self.driver.find_element(By.ID, "id_a").send_keys("1")
         self.driver.find_element(By.ID, "id_b").click()
@@ -731,11 +710,9 @@ class DashboardTestCase(StaticLiveServerTestCase):
         # Hacer otro
         self.driver.find_element(By.LINK_TEXT, "Votes").click()
         self.driver.find_element(By.CSS_SELECTOR, "li > .addlink").click()
-        self.driver.find_element(
-            By.ID, "id_voting_id").send_keys(str(self.voting.id))
+        self.driver.find_element(By.ID, "id_voting_id").send_keys(str(self.voting.id))
         self.driver.find_element(By.ID, "id_voter_id").click()
-        self.driver.find_element(
-            By.ID, "id_voter_id").send_keys(str(self.userlog.id))
+        self.driver.find_element(By.ID, "id_voter_id").send_keys(str(self.userlog.id))
         self.driver.find_element(By.ID, "id_a").click()
         self.driver.find_element(By.ID, "id_a").send_keys("1")
         self.driver.find_element(By.ID, "id_b").click()
