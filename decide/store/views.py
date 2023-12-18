@@ -1,3 +1,4 @@
+from django.shortcuts import render
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 import django_filters.rest_framework
@@ -13,11 +14,15 @@ from django.contrib import messages
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 
+
 from .models import Vote
 from .serializers import VoteSerializer
 from base import mods
 from base.perms import UserIsStaff
 from rest_framework.permissions import IsAuthenticated
+
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 class StoreView(generics.ListAPIView):
@@ -37,11 +42,13 @@ class StoreView(generics.ListAPIView):
         * voter: id
         * vote: { "a": int, "b": int }
         """
-
         vid = request.data.get("voting")
         voting = mods.get("voting", params={"id": vid})
+
+        vid = request.data.get("voting")
+
+        voting = mods.get("voting", params={"id": vid})
         if not voting or not isinstance(voting, list):
-            # print("por aqui 35")
             return Response({}, status=status.HTTP_401_UNAUTHORIZED)
         start_date = voting[0].get("start_date", None)
         # print ("Start date: "+  start_date)
@@ -51,13 +58,12 @@ class StoreView(generics.ListAPIView):
         # print (not_started)
         is_closed = end_date and parse_datetime(end_date) < timezone.now()
         if not_started or is_closed:
-            # print("por aqui 42")
             return Response({}, status=status.HTTP_401_UNAUTHORIZED)
 
         uid = request.data.get("voter")
-        vote = request.data.get("vote")
+        votes = request.data.get("votes")  # Expect 'votes' to be an array
 
-        if not vid or not uid or not vote:
+        if not vid or not uid or not votes:
             return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
         # validating voter
@@ -70,7 +76,6 @@ class StoreView(generics.ListAPIView):
         )
         voter_id = voter.get("id", None)
         if not voter_id or voter_id != uid:
-            # print("por aqui 59")
             return Response({}, status=status.HTTP_401_UNAUTHORIZED)
 
         # the user is in the census
@@ -78,18 +83,41 @@ class StoreView(generics.ListAPIView):
             "census/{}".format(vid), params={"voter_id": uid}, response=True
         )
         if perms.status_code == 401:
-            # print("por aqui 65")
             return Response({}, status=status.HTTP_401_UNAUTHORIZED)
 
-        a = vote.get("a")
-        b = vote.get("b")
+        for vote in votes:
+            nested_vote = vote.get("vote")
+            if nested_vote:
+                a = nested_vote.get("a")
+                b = nested_vote.get("b")
+                v = Vote(voting_id=vid, voter_id=uid, a=a, b=b)
+                v.save()
 
         defs = {"a": a, "b": b}
-        v, _ = Vote.objects.get_or_create(voting_id=vid, voter_id=uid, defaults=defs)
-        v.a = a
-        v.b = b
+        if voting[0].get("voting_type", None) == "H":
+            census = mods.get(
+                "census/role/{}".format(vid), params={"voter_id": uid}, response=True
+            )
+            census_content = census.content.decode("utf-8")
+            role = census_content.strip('"')
+            numero = int(role)
+            for i in range(1, numero):
+                v, _ = Vote.objects.get_or_create(
+                    voting_id=vid, voter_id=uid, value=i, defaults=defs
+                )
+                v.a = a
+                v.b = b
+                v.save()
 
-        v.save()
+        # Send a message through Django Channels
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "votes",
+            {
+                "type": "vote.added",
+                "vote_id": vid,
+            },
+        )
 
         return Response({})
 
@@ -193,9 +221,15 @@ def delete_selected_backup(request, selected_backup):
 
 class VoteHistoryView(generics.ListAPIView):
     serializer_class = VoteSerializer
-    permission_classes = [IsAuthenticated]
+    template_name = "voteHistory.html"
 
-    def get_queryset(self):
+    def get(self, request):
         # Filtra los votos del usuario actual
+        self.permission_classes = (IsAuthenticated,)
+        self.check_permissions(request)
         user = self.request.user
-        return Vote.objects.filter(voter_id=user.id).order_by("-voted")
+        votes = Vote.objects.filter(voter_id=user.id).order_by("-voted")
+        votesEmpty = len(votes) == 0
+        return render(
+            request, self.template_name, {"votes": votes, "votesEmpty": votesEmpty}
+        )
