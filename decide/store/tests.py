@@ -29,6 +29,7 @@ from selenium.webdriver.common.keys import Keys
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium.webdriver.support.ui import Select
 
+
 class StoreTextCase(BaseTestCase):
     def setUp(self):
         super().setUp()
