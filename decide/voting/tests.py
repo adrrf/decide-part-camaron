@@ -704,7 +704,7 @@ class VotingModelTestCasePreference(BaseTestCase):
                 bag = list(range(1, len(question.options.all()) + 1))
                 l = []
                 n = len(question.options.all()) - 1
-                for e in question.options.all():
+                for _ in question.options.all():
                     l.append(bag.pop(random.randint(0, n)))
                     n -= 1
 
@@ -743,7 +743,7 @@ class VotingModelTestCasePreference(BaseTestCase):
         tally = self.v.tally
 
         for q in self.v.postproc:
-            for question in v.questions.all():
+            for question in self.v.questions.all():
                 self.assertEqual(
                     q["votes"],
                     sum(e[q["number"] - 1] for e in tally)

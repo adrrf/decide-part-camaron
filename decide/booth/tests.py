@@ -9,12 +9,8 @@ from django.contrib.auth.models import User
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
-from base.tests import BaseTestCase
-from voting.models import Voting, Question, QuestionOption
-from mixnet.models import Auth
 from django.conf import settings
 from census.models import Census
-import time
 
 import time
 

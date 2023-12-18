@@ -21,24 +21,6 @@ from django.conf import settings
 from django.test import Client
 import os
 from django.db import transaction
-from channels.testing import WebsocketCommunicator
-from channels.routing import URLRouter
-from django.urls import re_path
-from .consumers import VoteConsumer
-from channels.layers import get_channel_layer
-from django.conf import settings
-from django.test import Client
-import os
-from django.db import transaction
-
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
-from selenium.webdriver.support.ui import Select
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -46,7 +28,6 @@ from selenium.webdriver.common.keys import Keys
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium.webdriver.support.ui import Select
-
 
 class StoreTextCase(BaseTestCase):
     def setUp(self):

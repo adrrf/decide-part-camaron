@@ -90,7 +90,7 @@ def update_SiNo_Option(sender, instance, created, **kwargs):
                     raise ValidationError(
                         {
                             "options": [
-                                f"No puedes añadir más opciones, ni editar los valores ya predefinidos. El número máximo de opciones permitidas es 3."
+                                "No puedes añadir más opciones, ni editar los valores ya predefinidos. El número máximo de opciones permitidas es 3."
                             ]
                         }
                     )
