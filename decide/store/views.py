@@ -219,39 +219,6 @@ def delete_selected_backup(request, selected_backup):
         )
 
 
-def delete_backups(request):
-    backup_files = list(os.listdir(settings.DATABASE_BACKUP_DIR))
-    return render(request, "delete_backups.html", {"backups": backup_files})
-
-
-def delete_selected_backup(request, selected_backup):
-    if request.method == "POST":
-        selected_backup = request.POST.get("selected_backup", None)
-        if selected_backup:
-            backup_path = os.path.join(settings.DATABASE_BACKUP_DIR, selected_backup)
-            if (
-                os.path.exists(backup_path)
-                and backup_path.endswith(".psql.bin")
-                and not ".." in backup_path
-            ):
-                os.remove(backup_path)
-                messages.success(
-                    request, f'Backup "{selected_backup}" deleted successfully.'
-                )
-            else:
-                messages.error(request, "Error deleting backup: Backup file not found")
-                return HttpResponseBadRequest(
-                    f"Error deleting backup: Backup file not found: {selected_backup}"
-                )
-        else:
-            messages.error(request, "No backup selected for deletion.")
-        return HttpResponseRedirect(reverse("store:delete_backups"))
-    else:
-        return render(
-            request, "confirm_delete.html", {"selected_backup": selected_backup}
-        )
-
-
 class VoteHistoryView(generics.ListAPIView):
     serializer_class = VoteSerializer
     template_name = "voteHistory.html"
