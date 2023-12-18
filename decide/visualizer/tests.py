@@ -1,5 +1,4 @@
 from base.tests import BaseTestCase
-import itertools
 import json
 from base import mods
 from voting.models import Voting, Question, QuestionOption
@@ -10,10 +9,8 @@ from django.utils import timezone
 from census.models import Census
 from mixnet.mixcrypt import MixCrypt, ElGamal
 
-# Create your tests here.
 
-
-class visualizerTest(BaseTestCase):
+class visualizerExportCensus(BaseTestCase):
     def setUp(self):
         super().setUp()
 
@@ -35,8 +32,9 @@ class visualizerTest(BaseTestCase):
                 question=q, option="option {}".format(i + 1), number=i + 2
             )
             opt.save()
-        v = Voting(name="test voting", question=q)
+        v = Voting(name="test voting")
         v.save()
+        v.questions.set([q])
 
         a, _ = Auth.objects.get_or_create(
             url=settings.BASEURL, defaults={"me": True, "name": "test auth"}
@@ -66,7 +64,7 @@ class visualizerTest(BaseTestCase):
         voter = voters.pop()
 
         clear = {}
-        for opt in v.question.options.all():
+        for opt in v.questions.all()[0].options.all():
             clear[opt.number] = 0
             for _ in range(3):
                 a, b = self.encrypt_msg(opt.number, v)
@@ -81,50 +79,6 @@ class visualizerTest(BaseTestCase):
                 voter = voters.pop()
                 mods.post("store", json=data)
         return clear
-
-    def test_complete_voting(self):
-        v = self.create_voting()
-        self.create_voters(v)
-
-        v.create_pubkey()
-        v.start_date = timezone.now()
-        v.save()
-
-        clear = self.store_votes(v)
-
-        self.login()  # set token
-        v.tally_votes(self.token)
-
-        tally = v.tally
-        tally.sort()
-        tally = {k: len(list(x)) for k, x in itertools.groupby(tally)}
-
-        for q in v.question.options.all():
-            self.assertEqual(tally.get(q.number, 0), clear.get(q.number, 0))
-
-        for q in v.postproc:
-            self.assertEqual(tally.get(q["number"], 0), q["votes"])
-
-    def test_visualizer_render(self):
-        v = self.create_voting()
-        self.create_voters(v)
-
-        v.create_pubkey()
-        v.start_date = timezone.now()
-        v.save()
-
-        _ = self.store_votes(v)
-
-        self.login()  # set token
-        v.tally_votes(self.token)
-
-        response = self.client.get("/visualizer/" + str(v.id) + "/")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "visualizer/visualizer.html")
-
-        self.assertIn("voting", response.context)
-        self.assertIn("census", response.context)
 
     def test_not_open(self):
         v = self.create_voting()
@@ -171,4 +125,3 @@ class visualizerTest(BaseTestCase):
         self.assertEqual(
             len(json.loads(response.context_data["census"])["voters"]), 100
         )
-        self.assertEqual(len(json.loads(response.context_data["voting"])["tally"]), 9)

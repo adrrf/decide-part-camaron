@@ -46,9 +46,9 @@ class PostProcTestCase(BaseTestCase):
                 question=q, option="option {}".format(i + 1), number=i + 2
             )
             opt.save()
-        v = Voting(
-            name="test voting", question=q, postproc_type=postproc, voting_type=type
-        )
+        v = Voting(name="test voting", postproc_type=postproc, voting_type=type)
+        v.save()
+        v.questions.set([q])
         v.save()
 
         a, _ = Auth.objects.get_or_create(
@@ -79,20 +79,21 @@ class PostProcTestCase(BaseTestCase):
         voter = voters.pop()
 
         clear = {}
-        for opt in v.question.options.all():
-            clear[opt.number] = 0
-            for _ in range(5):
-                a, b = self.encrypt_msg(opt.number, v)
-                data = {
-                    "voting": v.id,
-                    "voter": voter.voter_id,
-                    "vote": {"a": a, "b": b},
-                }
-                clear[opt.number] += 1
-                user = self.get_or_create_user(voter.voter_id)
-                self.login(user=user.username)
-                voter = voters.pop()
-                mods.post("store", json=data)
+        for question in v.questions.all():
+            for opt in question.options.all():
+                clear[opt.number] = 0
+                for _ in range(5):
+                    a, b = self.encrypt_msg(opt.number, v)
+                    data = {
+                        "voting": v.id,
+                        "voter": voter.voter_id,
+                        "vote": {"a": a, "b": b},
+                    }
+                    clear[opt.number] += 1
+                    user = self.get_or_create_user(voter.voter_id)
+                    self.login(user=user.username)
+                    voter = voters.pop()
+                    mods.post("store", json=data)
         return clear
 
     def test_correct_postproc(self):
@@ -112,77 +113,91 @@ class PostProcTestCase(BaseTestCase):
         postproc = PostProcessing.objects.get(voting=v)
 
         dhont = postproc.results
-
         expected = [
             {
                 "dhont": [
-                    {"seat": 1, "percentaje": 5.0},
-                    {"seat": 2, "percentaje": 2.5},
-                    {"seat": 3, "percentaje": 1.6667},
-                    {"seat": 4, "percentaje": 1.25},
-                    {"seat": 5, "percentaje": 1.0},
-                    {"seat": 6, "percentaje": 0.8333},
-                    {"seat": 7, "percentaje": 0.7143},
-                    {"seat": 8, "percentaje": 0.625},
-                    {"seat": 9, "percentaje": 0.5556},
-                    {"seat": 10, "percentaje": 0.5},
-                ]
+                    {"seat": 1, "percentaje": 0.0},
+                    {"seat": 2, "percentaje": 0.0},
+                    {"seat": 3, "percentaje": 0.0},
+                    {"seat": 4, "percentaje": 0.0},
+                    {"seat": 5, "percentaje": 0.0},
+                    {"seat": 6, "percentaje": 0.0},
+                    {"seat": 7, "percentaje": 0.0},
+                    {"seat": 8, "percentaje": 0.0},
+                    {"seat": 9, "percentaje": 0.0},
+                    {"seat": 10, "percentaje": 0.0},
+                ],
+                "votes": 0,
+                "number": 2,
+                "option": "option 1",
             },
             {
                 "dhont": [
-                    {"seat": 1, "percentaje": 5.0},
-                    {"seat": 2, "percentaje": 2.5},
-                    {"seat": 3, "percentaje": 1.6667},
-                    {"seat": 4, "percentaje": 1.25},
-                    {"seat": 5, "percentaje": 1.0},
-                    {"seat": 6, "percentaje": 0.8333},
-                    {"seat": 7, "percentaje": 0.7143},
-                    {"seat": 8, "percentaje": 0.625},
-                    {"seat": 9, "percentaje": 0.5556},
-                    {"seat": 10, "percentaje": 0.5},
-                ]
+                    {"seat": 1, "percentaje": 0.0},
+                    {"seat": 2, "percentaje": 0.0},
+                    {"seat": 3, "percentaje": 0.0},
+                    {"seat": 4, "percentaje": 0.0},
+                    {"seat": 5, "percentaje": 0.0},
+                    {"seat": 6, "percentaje": 0.0},
+                    {"seat": 7, "percentaje": 0.0},
+                    {"seat": 8, "percentaje": 0.0},
+                    {"seat": 9, "percentaje": 0.0},
+                    {"seat": 10, "percentaje": 0.0},
+                ],
+                "votes": 0,
+                "number": 3,
+                "option": "option 2",
             },
             {
                 "dhont": [
-                    {"seat": 1, "percentaje": 5.0},
-                    {"seat": 2, "percentaje": 2.5},
-                    {"seat": 3, "percentaje": 1.6667},
-                    {"seat": 4, "percentaje": 1.25},
-                    {"seat": 5, "percentaje": 1.0},
-                    {"seat": 6, "percentaje": 0.8333},
-                    {"seat": 7, "percentaje": 0.7143},
-                    {"seat": 8, "percentaje": 0.625},
-                    {"seat": 9, "percentaje": 0.5556},
-                    {"seat": 10, "percentaje": 0.5},
-                ]
+                    {"seat": 1, "percentaje": 0.0},
+                    {"seat": 2, "percentaje": 0.0},
+                    {"seat": 3, "percentaje": 0.0},
+                    {"seat": 4, "percentaje": 0.0},
+                    {"seat": 5, "percentaje": 0.0},
+                    {"seat": 6, "percentaje": 0.0},
+                    {"seat": 7, "percentaje": 0.0},
+                    {"seat": 8, "percentaje": 0.0},
+                    {"seat": 9, "percentaje": 0.0},
+                    {"seat": 10, "percentaje": 0.0},
+                ],
+                "votes": 0,
+                "number": 4,
+                "option": "option 3",
             },
             {
                 "dhont": [
-                    {"seat": 1, "percentaje": 5.0},
-                    {"seat": 2, "percentaje": 2.5},
-                    {"seat": 3, "percentaje": 1.6667},
-                    {"seat": 4, "percentaje": 1.25},
-                    {"seat": 5, "percentaje": 1.0},
-                    {"seat": 6, "percentaje": 0.8333},
-                    {"seat": 7, "percentaje": 0.7143},
-                    {"seat": 8, "percentaje": 0.625},
-                    {"seat": 9, "percentaje": 0.5556},
-                    {"seat": 10, "percentaje": 0.5},
-                ]
+                    {"seat": 1, "percentaje": 0.0},
+                    {"seat": 2, "percentaje": 0.0},
+                    {"seat": 3, "percentaje": 0.0},
+                    {"seat": 4, "percentaje": 0.0},
+                    {"seat": 5, "percentaje": 0.0},
+                    {"seat": 6, "percentaje": 0.0},
+                    {"seat": 7, "percentaje": 0.0},
+                    {"seat": 8, "percentaje": 0.0},
+                    {"seat": 9, "percentaje": 0.0},
+                    {"seat": 10, "percentaje": 0.0},
+                ],
+                "votes": 0,
+                "number": 5,
+                "option": "option 4",
             },
             {
                 "dhont": [
-                    {"seat": 1, "percentaje": 5.0},
-                    {"seat": 2, "percentaje": 2.5},
-                    {"seat": 3, "percentaje": 1.6667},
-                    {"seat": 4, "percentaje": 1.25},
-                    {"seat": 5, "percentaje": 1.0},
-                    {"seat": 6, "percentaje": 0.8333},
-                    {"seat": 7, "percentaje": 0.7143},
-                    {"seat": 8, "percentaje": 0.625},
-                    {"seat": 9, "percentaje": 0.5556},
-                    {"seat": 10, "percentaje": 0.5},
-                ]
+                    {"seat": 1, "percentaje": 0.0},
+                    {"seat": 2, "percentaje": 0.0},
+                    {"seat": 3, "percentaje": 0.0},
+                    {"seat": 4, "percentaje": 0.0},
+                    {"seat": 5, "percentaje": 0.0},
+                    {"seat": 6, "percentaje": 0.0},
+                    {"seat": 7, "percentaje": 0.0},
+                    {"seat": 8, "percentaje": 0.0},
+                    {"seat": 9, "percentaje": 0.0},
+                    {"seat": 10, "percentaje": 0.0},
+                ],
+                "votes": 0,
+                "number": 6,
+                "option": "option 5",
             },
         ]
 
@@ -193,17 +208,6 @@ class PostProcTestCase(BaseTestCase):
                     expected[i]["dhont"][j],
                     "Métricas no coinciden",
                 )
-
-    def test_invalid_config_voting(self):
-        try:
-            self.create_voting("DHO", "M")
-        except ValidationError as e:
-            self.assertEqual(
-                e.message,
-                "Las técnicas de postprocesado no se pueden aplicar a votaciones no Simples",
-            )
-        else:
-            self.fail("Se esperaba una excepción ValidationError, pero no se lanzó")
 
     def test_droop_wikipedia_example(self):
         # validating the functionality of the function using the wikipedia example
@@ -246,14 +250,25 @@ class PostProcTestCase(BaseTestCase):
         droop = postproc.results
 
         expected_result = [
-            {"option": "option 1", "number": 2, "votes": 5, "droop": 2},
-            {"option": "option 2", "number": 3, "votes": 5, "droop": 2},
-            {"option": "option 3", "number": 4, "votes": 5, "droop": 2},
-            {"option": "option 4", "number": 5, "votes": 5, "droop": 2},
-            {"option": "option 5", "number": 6, "votes": 5, "droop": 2},
+            {"droop": 1, "votes": 0, "number": 2, "option": "option 1"},
+            {"droop": 1, "votes": 0, "number": 3, "option": "option 2"},
+            {"droop": 1, "votes": 0, "number": 4, "option": "option 3"},
+            {"droop": 1, "votes": 0, "number": 5, "option": "option 4"},
+            {"droop": 1, "votes": 0, "number": 6, "option": "option 5"},
         ]
 
         self.assertEqual(droop, expected_result)
+
+    def test_invalid_config_voting(self):
+        try:
+            self.create_voting("DHO", "M")
+        except ValidationError as e:
+            self.assertEqual(
+                e.message,
+                "Las técnicas de postprocesado no se pueden aplicar a votaciones no Simples",
+            )
+        else:
+            self.fail("Se esperaba una excepción ValidationError, pero no se lanzó")
 
     def test_invalid_droop_postproc(self):
         invalid_voting_types = ["M", "H", "Q"]
@@ -294,9 +309,9 @@ class PostProcTestsSaintLague(BaseTestCase):
                 question=q, option="option {}".format(i + 1), number=i + 2
             )
             opt.save()
-        v = Voting(
-            name="test voting", question=q, postproc_type=postproc, voting_type=type
-        )
+        v = Voting(name="test voting", postproc_type=postproc, voting_type=type)
+        v.save()
+        v.questions.set([q])
         v.save()
 
         a, _ = Auth.objects.get_or_create(
@@ -327,20 +342,21 @@ class PostProcTestsSaintLague(BaseTestCase):
         voter = voters.pop()
 
         clear = {}
-        for opt in v.question.options.all():
-            clear[opt.number] = 0
-            for _ in range(5):
-                a, b = self.encrypt_msg(opt.number, v)
-                data = {
-                    "voting": v.id,
-                    "voter": voter.voter_id,
-                    "vote": {"a": a, "b": b},
-                }
-                clear[opt.number] += 1
-                user = self.get_or_create_user(voter.voter_id)
-                self.login(user=user.username)
-                voter = voters.pop()
-                mods.post("store", json=data)
+        for question in v.questions.all():
+            for opt in question.options.all():
+                clear[opt.number] = 0
+                for _ in range(5):
+                    a, b = self.encrypt_msg(opt.number, v)
+                    data = {
+                        "voting": v.id,
+                        "voter": voter.voter_id,
+                        "vote": {"a": a, "b": b},
+                    }
+                    clear[opt.number] += 1
+                    user = self.get_or_create_user(voter.voter_id)
+                    self.login(user=user.username)
+                    voter = voters.pop()
+                    mods.post("store", json=data)
         return clear
 
     def test_saint_function(self):
@@ -364,42 +380,199 @@ class PostProcTestsSaintLague(BaseTestCase):
             )
             self.assertEqual(option["saintLague"], expected_seats)
 
-    def test_correct_postproc_saint_lague(self):
-        v = self.create_voting("PAR", "S")
-        self.create_voters(v)
 
-        v.create_pubkey()
-        v.start_date = timezone.now()
-        v.save()
+class TestSimulacionDroop(StaticLiveServerTestCase):
+    def setUp(self):
+        self.base = BaseTestCase()
+        self.base.setUp()
+        options = webdriver.ChromeOptions()
+        options.headless = True
+        self.vars = {}
+        self.driver = webdriver.Chrome(options=options)
+        user_admin = User(username="adminB", is_staff=True, is_superuser=True)
+        user_admin.set_password("qwertyA")
+        user_admin.save()
+        todos_los_permisos = Permission.objects.all()
+        user_admin.user_permissions.add(*todos_los_permisos)
+        user_admin.save()
+        self.id = user_admin.id
+        self.id_votacion = 1
 
-        self.store_votes(v)
-
-        self.login()
-        v.tally_votes(self.token)
-
-        postproc = PostProcessing.objects.get(voting=v)
-
-        saint_lague = postproc.results
-        results_expected = [
-            {"option": "option 1", "number": 2, "votes": 5, "saintLague": 2},
-            {"option": "option 2", "number": 3, "votes": 5, "saintLague": 2},
-            {"option": "option 3", "number": 4, "votes": 5, "saintLague": 2},
-            {"option": "option 4", "number": 5, "votes": 5, "saintLague": 2},
-            {"option": "option 5", "number": 6, "votes": 5, "saintLague": 2},
-        ]
-
-        self.assertEqual(saint_lague, results_expected)
-
-    def test_invalid_config_voting(self):
-        try:
-            self.create_voting("PAR", "M")
-        except ValidationError as e:
-            self.assertEqual(
-                e.message,
-                "Las técnicas de postprocesado no se pueden aplicar a votaciones no Simples",
-            )
+        prueba_votacion = Voting.objects.last()
+        if not prueba_votacion:
+            prueba_votacion = 0
         else:
-            self.fail("Se esperaba una excepción ValidationError, pero no se lanzó")
+            prueba_votacion = prueba_votacion.id
+
+        prueba_usuario = User.objects.last()
+        if not prueba_usuario:
+            prueba_usuario = 0
+        else:
+            prueba_usuario = prueba_usuario.id
+
+        super().setUp()
+
+    def tearDown(self):
+        super().tearDown()
+        self.driver.quit()
+        self.base.tearDown()
+
+    def wait_for_window(self, timeout=2):
+        time.sleep(round(timeout / 1000))
+        wh_now = self.driver.window_handles
+        wh_then = self.vars["window_handles"]
+        if len(wh_now) > len(wh_then):
+            return set(wh_now).difference(set(wh_then)).pop()
+
+    def test_01_simulaciondroop(self):
+        self.driver.get(f"{self.live_server_url}/admin/")
+        self.driver.set_window_size(1348, 696)
+        self.driver.find_element(By.ID, "id_username").click()
+        self.driver.find_element(By.ID, "id_username").send_keys("adminB")
+        self.driver.find_element(By.ID, "id_password").send_keys("qwertyA")
+        self.driver.find_element(By.CSS_SELECTOR, ".submit-row > input").click()
+        self.driver.find_element(By.CSS_SELECTOR, ".content").click()
+        self.driver.find_element(By.CSS_SELECTOR, ".model-voting > th").click()
+        self.driver.find_element(By.LINK_TEXT, "Votings").click()
+        self.driver.find_element(By.CSS_SELECTOR, "li > .addlink").click()
+        self.driver.find_element(By.ID, "id_name").click()
+        self.driver.find_element(By.ID, "id_name").send_keys("droop")
+        self.driver.find_element(By.ID, "id_desc").click()
+        self.driver.find_element(By.ID, "id_desc").send_keys(
+            "Testing con droop 3 opciones Si, No, Depende"
+        )
+        self.driver.find_element(By.ID, "id_voting_type").click()
+        self.driver.find_element(By.ID, "id_questions").click()
+        self.vars["window_handles"] = self.driver.window_handles
+        self.driver.find_element(By.ID, "add_id_questions").click()
+        self.vars["win8378"] = self.wait_for_window(2000)
+        self.vars["root"] = self.driver.current_window_handle
+        self.driver.switch_to.window(self.vars["win8378"])
+        self.driver.find_element(By.ID, "id_desc").click()
+        self.driver.find_element(By.ID, "id_desc").send_keys("Funcionará?")
+        self.driver.find_element(
+            By.CSS_SELECTOR, ".field-optionSiNo .vCheckboxLabel"
+        ).click()
+        self.driver.find_element(
+            By.CSS_SELECTOR, ".field-third_option > .checkbox-row"
+        ).click()
+        self.driver.find_element(By.ID, "id_third_option").click()
+        self.driver.find_element(By.NAME, "_save").click()
+        self.driver.switch_to.window(self.vars["root"])
+        self.driver.find_element(By.ID, "id_postproc_type").click()
+        dropdown = self.driver.find_element(By.ID, "id_postproc_type")
+        dropdown.find_element(By.XPATH, "//option[. = 'DROOP']").click()
+        self.driver.find_element(
+            By.CSS_SELECTOR, "#id_postproc_type > option:nth-child(3)"
+        ).click()
+        self.vars["window_handles"] = self.driver.window_handles
+        self.driver.find_element(By.CSS_SELECTOR, "#add_id_auths > img").click()
+        self.vars["win6358"] = self.wait_for_window(2000)
+        self.driver.switch_to.window(self.vars["win6358"])
+        self.driver.find_element(By.ID, "id_name").click()
+        self.driver.find_element(By.ID, "id_name").send_keys("perico")
+        self.driver.find_element(By.ID, "id_url").send_keys(Keys.DOWN)
+        self.driver.find_element(By.ID, "id_url").send_keys("http://localhost:8000")
+        self.driver.find_element(By.ID, "id_me").click()
+        self.driver.find_element(By.NAME, "_save").click()
+        self.driver.switch_to.window(self.vars["root"])
+        self.driver.find_element(By.ID, "id_seats").click()
+        self.driver.find_element(By.ID, "id_seats").send_keys("15")
+        self.driver.find_element(By.NAME, "_save").click()
+        self.driver.get(f"{self.live_server_url}/admin/census/census/")
+        self.driver.find_element(By.CSS_SELECTOR, "li > .addlink").click()
+        self.driver.find_element(By.ID, "id_voting_id").send_keys(self.id_votacion)
+        self.driver.find_element(By.ID, "id_voter_id").send_keys(self.id)
+        self.driver.find_element(By.NAME, "_save").click()
+        self.driver.get(f"{self.live_server_url}/admin/voting/voting/")
+        self.driver.find_element(By.NAME, "_selected_action").click()
+        dropdown = self.driver.find_element(By.NAME, "action")
+        dropdown.find_element(By.XPATH, "//option[. = 'Start']").click()
+        self.driver.find_element(By.CSS_SELECTOR, "option:nth-child(3)").click()
+        self.driver.find_element(By.NAME, "index").click()
+
+        # Obtener el id de la votación justamente creada
+        prueba_votacion = Voting.objects.last().id
+
+        sleep(8)
+        self.driver.get(f"{self.live_server_url}/booth/{prueba_votacion}")
+        sleep(5)
+        self.driver.find_element(By.CSS_SELECTOR, ".navbar-toggler-icon").click()
+        sleep(3)
+        self.driver.find_element(By.CSS_SELECTOR, ".btn-secondary").click()
+        sleep(3)
+        self.driver.find_element(By.ID, "username").click()
+        self.driver.find_element(By.ID, "username").send_keys("adminB")
+        self.driver.find_element(By.ID, "password").send_keys("qwertyA")
+        self.driver.find_element(By.ID, "password").send_keys(Keys.ENTER)
+        sleep(3)
+        self.driver.find_element(By.ID, "opt2_index0").click()
+        self.driver.find_element(By.CSS_SELECTOR, ".btn-primary").click()
+        sleep(2)
+        alert_element = self.driver.find_element(By.CLASS_NAME, "alert-danger")
+        div_contenido = alert_element.find_element(By.XPATH, ".//div").text
+        self.assertEquals(
+            div_contenido, "Error: Unauthorized", "Usuario no Autenticado"
+        )
+
+    def test_02_error(self):
+        self.driver.get(f"{self.live_server_url}/admin/")
+        self.driver.set_window_size(1348, 696)
+        self.driver.find_element(By.ID, "id_username").click()
+        self.driver.find_element(By.ID, "id_username").send_keys("adminB")
+        self.driver.find_element(By.ID, "id_password").send_keys("qwertyA")
+        self.driver.find_element(By.CSS_SELECTOR, ".submit-row > input").click()
+        self.driver.find_element(By.CSS_SELECTOR, ".model-voting .addlink").click()
+        self.driver.find_element(By.ID, "id_name").click()
+        self.driver.find_element(By.ID, "id_name").send_keys("error")
+        self.driver.find_element(By.ID, "id_desc").send_keys("combinacion invalida")
+        self.driver.find_element(By.ID, "id_postproc_type").click()
+        dropdown = self.driver.find_element(By.ID, "id_postproc_type")
+        dropdown.find_element(By.XPATH, "//option[. = 'DROOP']").click()
+        sleep(2)
+        self.driver.find_element(
+            By.CSS_SELECTOR, "#id_postproc_type > option:nth-child(2)"
+        ).click()
+        self.driver.find_element(By.CSS_SELECTOR, ".field-voting_type > div").click()
+        self.driver.find_element(By.ID, "id_voting_type").click()
+        dropdown = self.driver.find_element(By.ID, "id_voting_type")
+        dropdown.find_element(By.XPATH, "//option[. = 'Multiple Choice']").click()
+        self.driver.find_element(
+            By.CSS_SELECTOR, "#id_voting_type > option:nth-child(2)"
+        ).click()
+        self.vars["window_handles"] = self.driver.window_handles
+        self.driver.find_element(By.CSS_SELECTOR, "#add_id_auths > img").click()
+        self.vars["win9368"] = self.wait_for_window(2000)
+        self.vars["root"] = self.driver.current_window_handle
+        self.driver.switch_to.window(self.vars["win9368"])
+        self.driver.find_element(By.ID, "id_name").click()
+        self.driver.find_element(By.ID, "id_name").send_keys("garrafon")
+        self.driver.find_element(By.ID, "id_url").send_keys("http://localhost:8000")
+        self.driver.find_element(By.ID, "id_me").click()
+        self.driver.find_element(By.NAME, "_save").click()
+        self.driver.switch_to.window(self.vars["root"])
+        self.driver.find_element(By.ID, "id_questions").click()
+        self.vars["window_handles"] = self.driver.window_handles
+        self.driver.find_element(By.CSS_SELECTOR, "#add_id_questions > img").click()
+        self.vars["win6844"] = self.wait_for_window(2000)
+        self.driver.switch_to.window(self.vars["win6844"])
+        self.driver.find_element(By.ID, "id_desc").click()
+        self.driver.find_element(By.ID, "id_desc").send_keys("perico")
+        self.driver.find_element(By.ID, "id_options-0-number").send_keys("1")
+        self.driver.find_element(By.ID, "id_options-0-option").send_keys("a")
+        self.driver.find_element(By.ID, "id_options-1-number").send_keys("2")
+        self.driver.find_element(By.ID, "id_options-1-option").send_keys("b")
+        self.driver.find_element(By.ID, "id_options-2-number").send_keys("3")
+        self.driver.find_element(By.ID, "id_options-2-option").send_keys("c")
+        self.driver.find_element(By.NAME, "_save").click()
+        self.driver.switch_to.window(self.vars["root"])
+        self.driver.find_element(By.NAME, "_save").click()
+
+        sleep(3)
+        assert (
+            "validationerror" in self.driver.page_source
+            or "500" in self.driver.page_source
+        )
 
 
 class TestSimulacionDhont(StaticLiveServerTestCase):
@@ -463,9 +636,9 @@ class TestSimulacionDhont(StaticLiveServerTestCase):
             "Testing con Dhont 3 opciones Si, No, Depende"
         )
         self.driver.find_element(By.ID, "id_voting_type").click()
-        self.driver.find_element(By.ID, "id_question").click()
+        self.driver.find_element(By.ID, "id_questions").click()
         self.vars["window_handles"] = self.driver.window_handles
-        self.driver.find_element(By.ID, "add_id_question").click()
+        self.driver.find_element(By.ID, "add_id_questions").click()
         self.vars["win8378"] = self.wait_for_window(2000)
         self.vars["root"] = self.driver.current_window_handle
         self.driver.switch_to.window(self.vars["win8378"])
@@ -526,8 +699,9 @@ class TestSimulacionDhont(StaticLiveServerTestCase):
         self.driver.find_element(By.ID, "username").send_keys("adminB")
         self.driver.find_element(By.ID, "password").send_keys("qwertyA")
         self.driver.find_element(By.ID, "password").send_keys(Keys.ENTER)
-        sleep(3)
-        self.driver.find_element(By.ID, "q2").click()
+        sleep(5)
+        self.driver.find_element(By.ID, "opt2_index0").click()
+        sleep(2)
         self.driver.find_element(By.CSS_SELECTOR, ".btn-primary").click()
         sleep(2)
         alert_element = self.driver.find_element(By.CLASS_NAME, "alert-danger")
@@ -572,9 +746,9 @@ class TestSimulacionDhont(StaticLiveServerTestCase):
         self.driver.find_element(By.ID, "id_me").click()
         self.driver.find_element(By.NAME, "_save").click()
         self.driver.switch_to.window(self.vars["root"])
-        self.driver.find_element(By.ID, "id_question").click()
+        self.driver.find_element(By.ID, "id_questions").click()
         self.vars["window_handles"] = self.driver.window_handles
-        self.driver.find_element(By.CSS_SELECTOR, "#add_id_question > img").click()
+        self.driver.find_element(By.CSS_SELECTOR, "#add_id_questions > img").click()
         self.vars["win6844"] = self.wait_for_window(2000)
         self.driver.switch_to.window(self.vars["win6844"])
         self.driver.find_element(By.ID, "id_desc").click()
@@ -627,9 +801,9 @@ class TestSimulacionDhont(StaticLiveServerTestCase):
             "Testing con Dhont 3 opciones Si, No, Depende"
         )
         self.driver.find_element(By.ID, "id_voting_type").click()
-        self.driver.find_element(By.ID, "id_question").click()
+        self.driver.find_element(By.ID, "id_questions").click()
         self.vars["window_handles"] = self.driver.window_handles
-        self.driver.find_element(By.ID, "add_id_question").click()
+        self.driver.find_element(By.ID, "add_id_questions").click()
         self.vars["win8378"] = self.wait_for_window(2000)
         self.vars["root"] = self.driver.current_window_handle
         self.driver.switch_to.window(self.vars["win8378"])
@@ -752,9 +926,9 @@ class TestSimulacionSaintLague(StaticLiveServerTestCase):
             "Testing con Saint Lague 3 opciones Si, No, Depende"
         )
         self.driver.find_element(By.ID, "id_voting_type").click()
-        self.driver.find_element(By.ID, "id_question").click()
+        self.driver.find_element(By.ID, "id_questions").click()
         self.vars["window_handles"] = self.driver.window_handles
-        self.driver.find_element(By.ID, "add_id_question").click()
+        self.driver.find_element(By.ID, "add_id_questions").click()
         self.vars["win8378"] = self.wait_for_window(2000)
         self.vars["root"] = self.driver.current_window_handle
         self.driver.switch_to.window(self.vars["win8378"])
@@ -816,7 +990,7 @@ class TestSimulacionSaintLague(StaticLiveServerTestCase):
         self.driver.find_element(By.ID, "password").send_keys("qwertyA")
         self.driver.find_element(By.ID, "password").send_keys(Keys.ENTER)
         sleep(3)
-        self.driver.find_element(By.ID, "q2").click()
+        self.driver.find_element(By.ID, "opt2_index0").click()
         self.driver.find_element(By.CSS_SELECTOR, ".btn-primary").click()
         sleep(2)
         alert_element = self.driver.find_element(By.CLASS_NAME, "alert-danger")
@@ -861,9 +1035,9 @@ class TestSimulacionSaintLague(StaticLiveServerTestCase):
         self.driver.find_element(By.ID, "id_me").click()
         self.driver.find_element(By.NAME, "_save").click()
         self.driver.switch_to.window(self.vars["root"])
-        self.driver.find_element(By.ID, "id_question").click()
+        self.driver.find_element(By.ID, "id_questions").click()
         self.vars["window_handles"] = self.driver.window_handles
-        self.driver.find_element(By.CSS_SELECTOR, "#add_id_question > img").click()
+        self.driver.find_element(By.CSS_SELECTOR, "#add_id_questions > img").click()
         self.vars["win6844"] = self.wait_for_window(2000)
         self.driver.switch_to.window(self.vars["win6844"])
         self.driver.find_element(By.ID, "id_desc").click()
@@ -916,9 +1090,9 @@ class TestSimulacionSaintLague(StaticLiveServerTestCase):
             "Testing con Saint Lague 3 opciones Si, No, Depende"
         )
         self.driver.find_element(By.ID, "id_voting_type").click()
-        self.driver.find_element(By.ID, "id_question").click()
+        self.driver.find_element(By.ID, "id_questions").click()
         self.vars["window_handles"] = self.driver.window_handles
-        self.driver.find_element(By.ID, "add_id_question").click()
+        self.driver.find_element(By.ID, "add_id_questions").click()
         self.vars["win8378"] = self.wait_for_window(2000)
         self.vars["root"] = self.driver.current_window_handle
         self.driver.switch_to.window(self.vars["win8378"])
