@@ -61,6 +61,14 @@ class DefVoters(SequentialTaskSet):
             "voting": VOTING
         }), headers=headers)
 
+    @task
+    def viewhistory(self):
+        headers = {
+            'Authorization': 'Token ' + self.token.get('token'),
+            'content-type': 'application/json'
+        }
+        self.client.get("/store/voteHistory/", headers=headers)
+
 
     def on_quit(self):
         self.voter = None
