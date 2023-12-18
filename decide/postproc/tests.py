@@ -385,9 +385,26 @@ class TestSimulacionDroop(StaticLiveServerTestCase):
     def setUp(self):
         self.base = BaseTestCase()
         self.base.setUp()
+        self.vars = {}
+
         options = webdriver.ChromeOptions()
         options.headless = True
-        self.vars = {}
+
+        # Configuración de opciones
+        option_list = [
+            "--headless",
+            "--disable-gpu",
+            "--window-size=1920,1200",
+            "--ignore-certificate-errors",
+            "--disable-extensions",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+        ]
+
+        for option in option_list:
+            options.add_argument(option)
+
+        # Asignar opciones al controlador
         self.driver = webdriver.Chrome(options=options)
         user_admin = User(username="adminB", is_staff=True, is_superuser=True)
         user_admin.set_password("qwertyA")
@@ -397,18 +414,6 @@ class TestSimulacionDroop(StaticLiveServerTestCase):
         user_admin.save()
         self.id = user_admin.id
         self.id_votacion = 1
-
-        prueba_votacion = Voting.objects.last()
-        if not prueba_votacion:
-            prueba_votacion = 0
-        else:
-            prueba_votacion = prueba_votacion.id
-
-        prueba_usuario = User.objects.last()
-        if not prueba_usuario:
-            prueba_usuario = 0
-        else:
-            prueba_usuario = prueba_usuario.id
 
         super().setUp()
 
@@ -579,9 +584,26 @@ class TestSimulacionDhont(StaticLiveServerTestCase):
     def setUp(self):
         self.base = BaseTestCase()
         self.base.setUp()
+        self.vars = {}
+
         options = webdriver.ChromeOptions()
         options.headless = True
-        self.vars = {}
+
+        # Configuración de opciones
+        option_list = [
+            "--headless",
+            "--disable-gpu",
+            "--window-size=1920,1200",
+            "--ignore-certificate-errors",
+            "--disable-extensions",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+        ]
+
+        for option in option_list:
+            options.add_argument(option)
+
+        # Asignar opciones al controlador
         self.driver = webdriver.Chrome(options=options)
         user_admin = User(username="adminB", is_staff=True, is_superuser=True)
         user_admin.set_password("qwertyA")
@@ -591,20 +613,6 @@ class TestSimulacionDhont(StaticLiveServerTestCase):
         user_admin.save()
         self.id = user_admin.id
         self.id_votacion = 1
-
-        prueba_votacion = Voting.objects.last()
-        if not prueba_votacion:
-            prueba_votacion = 0
-        else:
-            prueba_votacion = prueba_votacion.id
-
-        prueba_usuario = User.objects.last()
-        if not prueba_usuario:
-            prueba_usuario = 0
-        else:
-            prueba_usuario = prueba_usuario.id
-
-        super().setUp()
 
     def tearDown(self):
         super().tearDown()
@@ -869,9 +877,26 @@ class TestSimulacionSaintLague(StaticLiveServerTestCase):
     def setUp(self):
         self.base = BaseTestCase()
         self.base.setUp()
+        self.vars = {}
+
         options = webdriver.ChromeOptions()
         options.headless = True
-        self.vars = {}
+
+        # Configuración de opciones
+        option_list = [
+            "--headless",
+            "--disable-gpu",
+            "--window-size=1920,1200",
+            "--ignore-certificate-errors",
+            "--disable-extensions",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+        ]
+
+        for option in option_list:
+            options.add_argument(option)
+
+        # Asignar opciones al controlador
         self.driver = webdriver.Chrome(options=options)
         user_admin = User(username="adminB", is_staff=True, is_superuser=True)
         user_admin.set_password("qwertyA")

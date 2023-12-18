@@ -15,11 +15,28 @@ class VotingPreferenceTestCaseSelenium(StaticLiveServerTestCase):
         self.client = APIClient()
         self.base = BaseTestCase()
         self.base.setUp()
-        self.vars = {}
         mods.mock_query(self.client)
+
+        self.vars = {}
 
         options = webdriver.ChromeOptions()
         options.headless = True
+
+        # Configuración de opciones
+        option_list = [
+            "--headless",
+            "--disable-gpu",
+            "--window-size=1920,1200",
+            "--ignore-certificate-errors",
+            "--disable-extensions",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+        ]
+
+        for option in option_list:
+            options.add_argument(option)
+
+        # Asignar opciones al controlador
         self.driver = webdriver.Chrome(options=options)
 
         u = User(username="admin1")
@@ -46,11 +63,28 @@ class VotingPreferenceTestCaseSeleniumSuccess(StaticLiveServerTestCase):
         self.client = APIClient()
         self.base = BaseTestCase()
         self.base.setUp()
-        self.vars = {}
         mods.mock_query(self.client)
+
+        self.vars = {}
 
         options = webdriver.ChromeOptions()
         options.headless = True
+
+        # Configuración de opciones
+        option_list = [
+            "--headless",
+            "--disable-gpu",
+            "--window-size=1920,1200",
+            "--ignore-certificate-errors",
+            "--disable-extensions",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+        ]
+
+        for option in option_list:
+            options.add_argument(option)
+
+        # Asignar opciones al controlador
         self.driver = webdriver.Chrome(options=options)
 
         u = User(username="admin1")
@@ -77,11 +111,27 @@ class VotingPreferenceTestCaseSeleniumFail(StaticLiveServerTestCase):
         self.client = APIClient()
         self.base = BaseTestCase()
         self.base.setUp()
-        self.vars = {}
         mods.mock_query(self.client)
+        self.vars = {}
 
         options = webdriver.ChromeOptions()
         options.headless = True
+
+        # Configuración de opciones
+        option_list = [
+            "--headless",
+            "--disable-gpu",
+            "--window-size=1920,1200",
+            "--ignore-certificate-errors",
+            "--disable-extensions",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+        ]
+
+        for option in option_list:
+            options.add_argument(option)
+
+        # Asignar opciones al controlador
         self.driver = webdriver.Chrome(options=options)
 
         u = User(username="admin1")

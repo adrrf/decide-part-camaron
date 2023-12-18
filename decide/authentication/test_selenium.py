@@ -16,9 +16,26 @@ class AdminTestCase(StaticLiveServerTestCase):
         self.base = BaseTestCase()
         self.base.setUp()
 
-        # Opciones de Chrome
+        self.vars = {}
+
         options = webdriver.ChromeOptions()
         options.headless = True
+
+        # Configuración de opciones
+        option_list = [
+            "--headless",
+            "--disable-gpu",
+            "--window-size=1920,1200",
+            "--ignore-certificate-errors",
+            "--disable-extensions",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+        ]
+
+        for option in option_list:
+            options.add_argument(option)
+
+        # Asignar opciones al controlador
         self.driver = webdriver.Chrome(options=options)
 
         super().setUp()
@@ -54,8 +71,26 @@ class VisualizerTestCase(StaticLiveServerTestCase):
     def setUp(self):
         self.base = BaseTestCase()
         self.base.setUp()
+        self.vars = {}
+
         options = webdriver.ChromeOptions()
         options.headless = True
+
+        # Configuración de opciones
+        option_list = [
+            "--headless",
+            "--disable-gpu",
+            "--window-size=1920,1200",
+            "--ignore-certificate-errors",
+            "--disable-extensions",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+        ]
+
+        for option in option_list:
+            options.add_argument(option)
+
+        # Asignar opciones al controlador
         self.driver = webdriver.Chrome(options=options)
         super().setUp()
 
