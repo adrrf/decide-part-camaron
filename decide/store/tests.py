@@ -354,7 +354,6 @@ class RealTimeDataTestCase(TestCase):
         connected, _ = await communicator.connect()
         self.assertTrue(connected)
 
-
         await communicator.send_json_to(
             {
                 "type": "voting.open",
