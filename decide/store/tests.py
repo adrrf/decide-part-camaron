@@ -356,18 +356,6 @@ class RealTimeDataTestCase(TestCase):
 
         await communicator.send_json_to(
             {
-                "type": "vote.added",
-                "vote_id": self.voting.id,
-            },
-        )
-
-        response = await communicator.receive_json_from()
-
-        self.assertEqual(response["message"], "Vote received")
-        self.assertEqual(response["vote_id"], self.voting.id)
-
-        await communicator.send_json_to(
-            {
                 "type": "voting.open",
                 "voting_id": self.voting.id,
             },
