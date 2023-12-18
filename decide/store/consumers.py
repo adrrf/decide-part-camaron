@@ -15,8 +15,6 @@ class VoteConsumer(AsyncWebsocketConsumer):
             await self.voting_closed(content)
         elif content["type"] == "voting.open":
             await self.voting_open(content)
-        else:
-            await self.vote_added(content)
 
     async def connect(self):
         # Cuando el WebSocket se conecta, lo añade al grupo 'votes'.
