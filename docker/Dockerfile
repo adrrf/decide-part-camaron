@@ -1,4 +1,4 @@
-from python:3.9-alpine
+from python:3.10-alpine
 
 RUN apk add --no-cache git postgresql-dev gcc libc-dev
 RUN apk add --no-cache gcc g++ make libffi-dev python3-dev build-base
@@ -10,14 +10,14 @@ RUN pip install ipython
 
 WORKDIR /app
 
-RUN git clone https://github.com/decide-update-4-1/decide-update-4.1.git .
+RUN git clone https://github.com/Moffinguer/decide-part-camaron-2.git .
 RUN pip install -r requirements.txt
 
 WORKDIR /app/decide
 
 # local settings.py
 ADD docker-settings.py /app/decide/local_settings.py
+ADD createsuperuser.bash /app/decide/createsuperuser.bash
 
 RUN ./manage.py collectstatic
-
 #CMD ["gunicorn", "-w 5", "decide.wsgi", "--timeout=500", "-b 0.0.0.0:5000"]
